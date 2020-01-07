@@ -1,5 +1,5 @@
 # tic-tac-toe-node.js
-The classic that runs entirely in cconsole on Node.js. Choose from several play modes: v.s. a human player, a random move generator, and the minimax algorithm
+The classic that runs entirely in console on Node.js. Choose from several play modes: v.s. a human player, a random move generator, and the minimax algorithm
 
 ## Getting Started
 ### Prerequisites
