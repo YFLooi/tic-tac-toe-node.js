@@ -1,12 +1,14 @@
 //This program aims to find max score player can get
+//Source Python3 code: https://www.geeksforgeeks.org/minimax-algorithm-in-game-theory-set-1-introduction/
+//This is the same Python3 code translated into JS
 
 /**
  * minimax(0, 0, true, scores, treeDepth)
  * @param {integer} curDepth Current depth of tree. Always starts at zero
- * @param {*} nodeIndex Only 2 nodes per depth level, hence we find just nodeIndex*2 and nodeIndex*2+1
- * @param {*} maxTurn If true, maximising player is running algo for highest score possible
- * @param {*} scores 
- * @param {*} targetDepth 
+ * @param {integer} nodeIndex Only 2 nodes per depth level, hence we find just nodeIndex*2 and nodeIndex*2+1
+ * @param {integer} maxTurn If true, maximising player is running algo for highest score possible
+ * @param {integer} scores 
+ * @param {integer} targetDepth 
  */
 function minimax (curDepth, nodeIndex, maxTurn, scores, targetDepth){
     //base case : targetDepth reached 
