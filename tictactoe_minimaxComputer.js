@@ -56,7 +56,7 @@ async function main() {
         return null;
     }
     function bestMove() {
-        let bestScore = -Infinity; //Minimiser always starts with infinity, and aims to go towards -infinity
+        let bestScore = Infinity; //Minimiser always starts with infinity, and aims to go towards -infinity
         let move;
        
         //These for loop pairs will iterate over every empty position
@@ -73,7 +73,7 @@ async function main() {
                 board[`${rowCode[i]}${j}`] = ' ';
     
                 // Once this condition is fulfilled, the best next move is obtained
-                if (score > bestScore) {
+                if (score < bestScore) {
                     bestScore = score;
                     move = `${rowCode[i]}${j}`;
                 }
@@ -107,7 +107,7 @@ async function main() {
         }
 
         if (isMaximizing === true) {
-            let bestScore = -9999;
+            let bestScore = -Infinity;
                 for (let i = 0; i < 3; i++) {
                     for (let j = 0; j < 3; j++) {
                         // Is the spot available?
@@ -124,7 +124,7 @@ async function main() {
                 }
             return bestScore;
         } else if (isMaximizing === false){
-            let bestScore = 9999;
+            let bestScore = Infinity;
     
             //These for loop pairs will iterate over every empty position
             for (let i = 0; i < 3; i++) {
