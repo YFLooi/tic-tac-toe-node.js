@@ -23,9 +23,11 @@ function question (q) {
     });
 };
 
+//Think of this as a component class
 async function main() {
     //Think of this segment as React's component state declaration
     const rowCode = [`a`,`b`,`c`]; //Use to translate rowCode[0,1,2] into a,b,c
+    const colCode = [`1`,`2`,`3`]; //Use to translate rowCode[0,1,2] into 1,2,3
     let gameMode = '';
     let validGameMode = false;
     let playerMove = ``;
@@ -39,8 +41,43 @@ async function main() {
         c1:` `, c2:` `, c3:` `
     };
     let win = false;
+    const computer = 'O'
+    const human = 'X'
 
     //Think of this segment as React's component function declaration
+    async function playerMoveProcess(moveMade){
+        console.log(`Move made by player: ${moveMade}`)
+
+        if (
+               moveMade === 'a1' || moveMade === 'a2' || moveMade === 'a3'
+            || moveMade === 'b1' || moveMade === 'b2' || moveMade === 'b3'
+            || moveMade === 'c1' || moveMade === 'c2' || moveMade === 'c3'
+        ){
+            /**
+             * Needed to prevent player moves from overriding computer's moves!
+             * That's unfair!
+             */
+            let availableMovesTaken = availableMoves.findIndex(moves => moves === moveMade);
+            if (availableMovesTaken !== -1){
+                availableMoves.splice(availableMovesTaken,1);
+                board[moveMade] = 'X';
+                await checkWin();
+
+                return validPlayerMove = true;
+            } else {
+                /**If the player did try to overwrite the computer's move
+                 * this if-else check must return something, otherwise JS
+                 * assumes validPlayerMove is truth-sy!
+                 * This also works when the player inserts the same move
+                 * they already inserted.
+                 */
+                return validPlayerMove = false;    
+            }
+        } else {
+            return validPlayerMove = false;
+        }
+    }
+
     async function computerMoveProcess(){
         if (gameMode === '2Players'){
             let player2Move
@@ -129,10 +166,10 @@ async function main() {
             
             board[selectionMade] = 'O';
             computerMove = selectionMade;
-        } else if (gameMode === 'moderate'){
+        } else if (gameMode === 'minimax'){
             let selectionMade = await bestMove();
 
-            board[selectionMade] = 'O';
+            board[selectionMade] = computer;
             computerMove = selectionMade;
     
             //Removes move taken from pool of availableMoves
@@ -146,124 +183,82 @@ async function main() {
         return null;
     }
     function bestMove() {
-        let bestScore = -Infinity; //Minimiser always starts with infinity, and aims to go towards -infinity
-        let move;
-       
-        //These for loop pairs will iterate over every empty position
+        // Computer is maximiser, hence bestScore starts from -Infinity
+        let bestScore = -Infinity;
+        let move = ``;
+  
+        //Subjects each empty spot on the board to the minimax algo
+        //Tends to pick centre (b2) for computer if not selected by human player
         for (let i = 0; i < 3; i++) {
-          for (let j = 1; j <= 3; j++) {
-            //When an empty `` position is found, run minimax on that position
-            //Postion denoted by `${rowCode[i]}${j}`
-            if (board[`${rowCode[i]}${j}`] === ` `) {
-                //Make test mark on board with computer's move
-                board[`${rowCode[i]}${j}`] = 'X';
-                //Call made to minimax() to find best score
-                let score = minimax(board, 0, false);
-                //Remove test mark
-                board[`${rowCode[i]}${j}`] = ' ';
-    
-                // Once this condition is fulfilled, the best next move is obtained
-                if (score > bestScore) {
-                    bestScore = score;
-                    move = `${rowCode[i]}${j}`;
-                }
+          for (let j = 0; j < 3; j++) {
+            if (board[`${rowCode[i]}${colCode[j]}`] == ' ') {
+              board[`${rowCode[i]}${colCode[j]}`] = computer;
+              let score = minimax(board, 0, false);
+              board[`${rowCode[i]}${colCode[j]}`] = ' ';
+  
+              if (score > bestScore) {
+                bestScore = score;
+                move = `${rowCode[i]}${colCode[j]}`;
+              }
             }
           }
         }
-        
-        return move;
-    }   
+        return move
+      }
+      /**
+       * The score assigned to the winner at a particular depth and node 
+       * Maximiser's score is +, minimiser's is -, tie is 0
+       * Must assign score with each iteration's outcome, otherwise -Infinity is returned as best score!
+       */
+    let scores = {
+        X: -10,
+        O: 10,
+        tie: 0
+    };  
     /**
      * Minimax algorithm to determine best postion for computer, after considering player's move
      * Assumption: If both players play optimally, they will tie. If player does not play optimally, computer will win
      * @param {object} board Object representing content and position on board
      * @param {integer} depth Limit by number of empty `` spaces remaining in board
-     * @param {*} isMaximizing 
+     * @param {boolean} isMaximizing Determines if maximising or minimising algorithm to be used in minimax(). 
+     * The computer will use the maximising algorithm
      */
-    //The score assigned to the winner at a particular depth and node
-    //Must assign score with each iteration's outcome, otherwise -Infinity is returned as best score!
-    let scores = {
-        X: 1,
-        O: -1,
-        tie: 0
-    };
     function minimax(board, depth, isMaximizing) {
-        //This runs on each iteration of the minimax function
-        let winner = checkWinMinimax();
-        //If there is a winner/tie, a score is returned.
-        if (winner !== null) {
-            //Returns a score to the winning opponent (player, computer) or a tie)
-            return scores[winner];
+        let result = checkMinimaxWinner();
+        if (result !== null) {
+            return scores[result];
         }
 
-        if (isMaximizing === true) {
-            let bestScore = -9999;
-                for (let i = 0; i < 3; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        // Is the spot available?
-                        if (board[`${rowCode[i]}${j}`] === ' ') {
-                            board[`${rowCode[i]}${j}`] = `X`; //Test checking this position for the computer
-                            let score = minimax(board, depth + 1, false); //Calculate the resulting score
-
-                            board[`${rowCode[i]}${j}`] = ` `; //Remove the check made
-                            if(score > bestScore){
-                                bestScore = score;
-                            }
-                        }
-                    }
-                }
-            return bestScore;
-        } else if (isMaximizing === false){
-            let bestScore = 9999;
-    
-            //These for loop pairs will iterate over every empty position
+        if (isMaximizing) {
+            //Computer makes mark here, it aims to maximise its score
+            let bestScore = -Infinity;
             for (let i = 0; i < 3; i++) {
-                for (let j = 1; j <= 3; j++) {
-                    if (board[`${rowCode[i]}${j}`] === ` `) {
-                        board[`${rowCode[i]}${j}`] = `O`; //Test checking this position for the human
-                        let score = minimax(board, depth + 1, true); //Calculate the resulting score
-                        
-                        board[`${rowCode[i]}${j}`] = ` `; //Remove the check made
-                        //bestScore = Math.min(score, bestScore); //The best score is the lowest for the maximiser (player)
-                        if(score < bestScore){
-                            bestScore = score;
-                        }
-                    }
+                for (let j = 0; j < 3; j++) {
+                // Is the spot available?
+                if (board[`${rowCode[i]}${colCode[j]}`] == ' ') {
+                    board[`${rowCode[i]}${colCode[j]}`] = computer;
+                    let score = minimax(board, depth + 1, false);
+                    board[`${rowCode[i]}${colCode[j]}`] = ' ';
+                    bestScore = Math.max(score, bestScore);
                 }
             }
-            return bestScore;
         }
-    }
-    async function playerMoveProcess(moveMade){
-        console.log(`Move made by player: ${moveMade}`)
-
-        if (
-               moveMade === 'a1' || moveMade === 'a2' || moveMade === 'a3'
-            || moveMade === 'b1' || moveMade === 'b2' || moveMade === 'b3'
-            || moveMade === 'c1' || moveMade === 'c2' || moveMade === 'c3'
-        ){
-            /**
-             * Needed to prevent player moves from overriding computer's moves!
-             * That's unfair!
-             */
-            let availableMovesTaken = availableMoves.findIndex(moves => moves === moveMade);
-            if (availableMovesTaken !== -1){
-                availableMoves.splice(availableMovesTaken,1);
-                board[moveMade] = 'X';
-                await checkWin();
-
-                return validPlayerMove = true;
-            } else {
-                /**If the player did try to overwrite the computer's move
-                 * this if-else check must return something, otherwise JS
-                 * assumes validPlayerMove is truth-sy!
-                 * This also works when the player inserts the same move
-                 * they already inserted.
-                 */
-                return validPlayerMove = false;    
-            }
+        return bestScore;
         } else {
-            return validPlayerMove = false;
+        //human makes mark here, it aims to minimise its score
+        let bestScore = Infinity;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                // Is the spot available?
+                if (board[`${rowCode[i]}${colCode[j]}`] == ' ') {
+                    board[`${rowCode[i]}${colCode[j]}`] = human;
+                    let score = minimax(board, depth + 1, true);
+                    board[`${rowCode[i]}${colCode[j]}`] = ' ';
+                    bestScore = Math.min(score, bestScore);
+                }
+            }
+        }
+        return bestScore;
         }
     }
     /**
@@ -281,52 +276,47 @@ async function main() {
         return (input1 === input2 && input2 === input3 && input1 !== ` `);
     }
     /**
-     * Special checkWin that does not allow game to end by setting win === true
+     * Special checkWinner that does not allow game to end by setting win === true
      */
-    function checkWinMinimax(){
-        //Across horizontals
-        for(i=0; i<3; i++){
-            if(check3Checked(board[`${rowCode[i]}${1}`],board[`${rowCode[i]}${2}`],board[`${rowCode[i]}${3}`]) === true){
-                //Checks first column of row to see who won. X = player, O = computer
-                if(board[`${rowCode[i]}${1}`] === 'X'){
-                    return 'X';
-                } else if(board[`${rowCode[i]}${1}`] === 'O'){
-                    return 'O';
-                }    
+    function checkMinimaxWinner() {
+        let winner = null;
+        
+        // Horizontal
+        for (let i = 0; i < 3; i++) {
+            if (check3Checked(board[`${rowCode[i]}${colCode[0]}`], board[`${rowCode[i]}${colCode[1]}`], board[`${rowCode[i]}${colCode[2]}`])) {
+            //Returns who won. Winner determined by the mark made in the winning move
+            winner = board[`${rowCode[i]}${colCode[0]}`];
             }
         }
-        //Across verticals
-        for(i=1; i<=3; i++){
-            if(check3Checked(board[`${rowCode[0]}${i}`],board[`${rowCode[1]}${i}`],board[`${rowCode[2]}${i}`]) === true){
-                //Checks first row of column to see who won. X = player, O = computer
-                if(board[`${rowCode[0]}${i}`] === 'X'){
-                    return 'X';
-                } else if(board[`${rowCode[0]}${i}`] === 'O'){
-                    return 'O';
-                }    
+        // Vertical
+        for (let i = 0; i < 3; i++) {
+            if (check3Checked(board[`${rowCode[0]}${colCode[i]}`], board[`${rowCode[1]}${colCode[i]}`], board[`${rowCode[2]}${colCode[i]}`])) {
+            winner = board[`${rowCode[0]}${colCode[i]}`];
             }
         }
-        //Across diagonals
-        if (check3Checked(board[`${rowCode[0]}${1}`],board[`${rowCode[1]}${2}`],board[`${rowCode[2]}${3}`]) === true){
-            if(board[`${rowCode[0]}${1}`] === 'X'){
-                return 'X';
-            } else if(board[`${rowCode[0]}${1}`] === 'O'){
-                return 'O';
+        // Diagonal
+        if (check3Checked(board[`${rowCode[0]}${colCode[0]}`], board[`${rowCode[1]}${colCode[1]}`], board[`${rowCode[2]}${colCode[2]}`])) {
+            winner = board[`${rowCode[0]}${colCode[0]}`];
+        }
+        if (check3Checked(board[`${rowCode[2]}${colCode[0]}`], board[`${rowCode[1]}${colCode[1]}`], board[`${rowCode[0]}${colCode[2]}`])) {
+            winner = board[`${rowCode[2]}${colCode[0]}`];
+        }
+        
+        //Checks remaining open spots as minimax algorithm progesses
+        let openSpots = 0;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[`${rowCode[i]}${colCode[j]}`] == ' ') {
+                    openSpots++;
+                }
             }
         }
-        if (check3Checked(board[`${rowCode[0]}${3}`],board[`${rowCode[1]}${2}`],board[`${rowCode[2]}${1}`]) === true){
-            if(board[`${rowCode[0]}${3}`] === 'X'){
-                return 'X';
-            } else if(board[`${rowCode[0]}${3}`] === 'O'){
-                return 'O';
-            }
-        }
-
-        //Tie: No win despite all avaiableMoves ===0 (all possible moves exhausted)
-        if (availableMoves.length === 0){
+        
+        if (winner == null && openSpots == 0) {
             return 'tie';
+        } else {
+            return winner;
         }
-        return null;
     }
     /**
      * Determines if a win condition has been fulfilled, then ends
@@ -337,42 +327,42 @@ async function main() {
     function checkWin(){
         //Across horizontals
         for(i=0; i<3; i++){
-            if(check3Checked(board[`${rowCode[i]}${1}`],board[`${rowCode[i]}${2}`],board[`${rowCode[i]}${3}`]) === true){
+            if(check3Checked(board[`${rowCode[i]}${colCode[0]}`],board[`${rowCode[i]}${colCode[1]}`],board[`${rowCode[i]}${colCode[2]}`]) === true){
                 win = true;
                 //Checks first column of row to see who won. X = player, O = computer
-                if(board[`${rowCode[i]}${1}`] === 'X'){
+                if(board[`${rowCode[i]}${colCode[0]}`] === 'X'){
                     console.log('Player has won!');
-                } else if(board[`${rowCode[i]}${1}`] === 'O'){
+                } else if(board[`${rowCode[i]}${colCode[0]}`] === 'O'){
                     console.log('Computer has won!');
                 }    
             }
         }
         //Across verticals
-        for(i=1; i<=3; i++){
-            if(check3Checked(board[`${rowCode[0]}${i}`],board[`${rowCode[1]}${i}`],board[`${rowCode[2]}${i}`]) === true){
+        for(i=0; i<3; i++){
+            if(check3Checked(board[`${rowCode[0]}${colCode[i]}`],board[`${rowCode[1]}${colCode[i]}`],board[`${rowCode[2]}${colCode[i]}`]) === true){
                 win = true;
                 //Checks first row of column to see who won. X = player, O = computer
-                if(board[`${rowCode[0]}${i}`] === 'X'){
+                if(board[`${rowCode[0]}${colCode[i]}`] === 'X'){
                     console.log('Player has won!');
-                } else if(board[`${rowCode[0]}${i}`] === 'O'){
+                } else if(board[`${rowCode[i]}${colCode[i]}`] === 'O'){
                     console.log('Computer has won!');
                 }    
             }
         }
         //Across diagonals
-        if (check3Checked(board[`${rowCode[0]}${1}`],board[`${rowCode[1]}${2}`],board[`${rowCode[2]}${3}`]) === true){
+        if (check3Checked(board[`${rowCode[0]}${colCode[0]}`],board[`${rowCode[1]}${colCode[1]}`],board[`${rowCode[2]}${colCode[2]}`]) === true){
             win = true;
-            if(board[`${rowCode[0]}${1}`] === 'X'){
+            if(board[`${rowCode[0]}${colCode[0]}`] === 'X'){
                 console.log('Player has won!');
-            } else if(board[`${rowCode[0]}${1}`] === 'O'){
+            } else if(board[`${rowCode[0]}${colCode[0]}`] === 'O'){
                 console.log('Computer has won!');
             }
         }
-        if (check3Checked(board[`${rowCode[0]}${3}`],board[`${rowCode[1]}${2}`],board[`${rowCode[2]}${1}`]) === true){
+        if (check3Checked(board[`${rowCode[0]}${colCode[2]}`],board[`${rowCode[1]}${colCode[1]}`],board[`${rowCode[2]}${colCode[0]}`]) === true){
             win = true;
-            if(board[`${rowCode[0]}${3}`] === 'X'){
+            if(board[`${rowCode[0]}${colCode[2]}`] === 'X'){
                 console.log('Player has won!');
-            } else if(board[`${rowCode[0]}${3}`] === 'O'){
+            } else if(board[`${rowCode[0]}${colCode[2]}`] === 'O'){
                 console.log('Computer has won!');
             }
         }
@@ -381,7 +371,6 @@ async function main() {
         if (availableMoves.length === 0 && win === false){
             console.log("Tie!")
         }
-        return null;
     }
 
     //Think of this segment as React's component render()
@@ -397,9 +386,9 @@ async function main() {
     console.log(`############################################################`)
     console.log(`!!!Select game mode!!!`)
     while (validGameMode !== true) {
-        gameMode = await question(`(2Players/easy/moderate): `);
+        gameMode = await question(`(2Players/easy/minimax): `);
 
-        if (gameMode === '2Players' || gameMode === 'easy' || gameMode === 'moderate'){
+        if (gameMode === '2Players' || gameMode === 'easy' || gameMode === 'minimax'){
             validGameMode = true
         } else {
             console.log("Please insert a valid option")
