@@ -4,6 +4,7 @@
 
 //Based on: https://stackoverflow.com/questions/8128578/reading-value-from-console-interactively
 const readline = require(`readline`);
+const menu = require('./console-menu.js');
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -23,18 +24,18 @@ function question (q) {
     });
 };
 
+
 //Think of this as a component class
 async function main() {
     //Think of this segment as React's component state declaration
+    let gameMode = ``;
     const rowCode = [`a`,`b`,`c`]; //Use to translate rowCode[0,1,2] into a,b,c
     const colCode = [`1`,`2`,`3`]; //Use to translate rowCode[0,1,2] into 1,2,3
-    let gameMode = '';
-    let validGameMode = false;
     let playerMove = ``;
     let validPlayerMove = false;
     let computerMove = ``;
     let availableMoves = [`a1`,`a2`,`a3`,`b1`,`b2`,`b3`,`c1`,`c2`,`c3`];
-    let exit = `n`;
+    let exit = ``;
     let board = {
         a1:` `, a2:` `, a3:` `, 
         b1:` `, b2:` `, b3:` `,
@@ -45,7 +46,7 @@ async function main() {
     const human = 'X'
 
     //Think of this segment as React's component function declaration
-    async function playerMoveProcess(moveMade){
+    function playerMoveProcess(moveMade){
         console.log(`Move made by player: ${moveMade}`)
 
         if (
@@ -61,7 +62,7 @@ async function main() {
             if (availableMovesTaken !== -1){
                 availableMoves.splice(availableMovesTaken,1);
                 board[moveMade] = 'X';
-                await checkWin();
+                checkWin();
 
                 return validPlayerMove = true;
             } else {
@@ -167,7 +168,7 @@ async function main() {
             board[selectionMade] = 'O';
             computerMove = selectionMade;
         } else if (gameMode === 'minimax'){
-            let selectionMade = await bestMove();
+            let selectionMade = bestMove();
 
             board[selectionMade] = computer;
             computerMove = selectionMade;
@@ -179,7 +180,7 @@ async function main() {
             }
         } 
 
-        await checkWin();
+        checkWin();
         return null;
     }
     function bestMove() {
@@ -373,37 +374,47 @@ async function main() {
         }
     }
 
-    //Think of this segment as React's component render()
-    console.log(`!!!Welcome to Tictactoe in Console!!!!`);
-    console.log(`Make a move by writing 'row-column'. 'a2' marks:`);
-    console.log(`   1 2 3 `);
-    console.log(`a | |X| |`);
-    console.log(`  -------`);
-    console.log(`b | | | |`);
-    console.log(`  -------`);
-    console.log(`c | | | |`);
-    console.log(` `);
-    console.log(`############################################################`)
-    console.log(`!!!Select game mode!!!`)
-    while (validGameMode !== true) {
-        gameMode = await question(`(2Players/easy/minimax): `);
-
-        if (gameMode === '2Players' || gameMode === 'easy' || gameMode === 'minimax'){
-            validGameMode = true
-        } else {
-            console.log("Please insert a valid option")
-        }
-    }
-    console.log(` `);
-    console.log(` `);
-    console.log(`############################################################`)
-    console.log(`!!!Game commenced!!!`)
-    console.log(` `);
-
     while (exit !== `y`) {
+        //Think of this segment as React's component render()
+        console.log(`############################################################`)
+        console.log(`!!!Welcome to TicTacToe in Console!!!!`);
+        console.log(`############################################################`)
+        console.log(`Make a move by writing 'row-column'. 'a2' marks:`);
+        console.log(`   1 2 3 `);
+        console.log(`a | |X| |`);
+        console.log(`  -------`);
+        console.log(`b | | | |`);
+        console.log(`  -------`);
+        console.log(`c | | | |`);
+        console.log(` `);
+        console.log(`############################################################`)
+        console.log(`Press Ctrl+C to Exit at any time`);
+        console.log(`############################################################`)
+        console.log(`!!!Select game mode!!!`)
+        await menu([
+            { hotkey: '1', title: '2Players', selected: true },
+            { hotkey: '2', title: 'easy' },
+            { hotkey: '3', title: 'minimax' },
+            { separator: true },
+        ], {
+            header: 'Select game mode', //Title of menu box
+            border: true, //Border is a set of '-'
+        }).then(item => {
+            if (item.title === '2Players' || item.title === 'easy' || item.title === 'minimax') {
+                gameMode = item.title;
+                console.log('You chose: ' + JSON.stringify(item.title));
+            } else {
+                console.log("Please insert a valid option")
+            }
+        });
+
+        console.log(`############################################################`)
+        console.log(`!!!Game commenced!!!`)
+        console.log(`############################################################`)
         console.log(`Available moves: ${availableMoves}`)
+
         playerMove = await question(`Your move (row-column): `);
-        await playerMoveProcess(playerMove)
+        playerMoveProcess(playerMove)
 
         if (validPlayerMove === false){
             console.log(`Please insert a valid move`)
@@ -449,8 +460,6 @@ async function main() {
             //Resets the 'win' condition
             win = false;
         }
-    }
-    return null;
+    }  
 }
 main();
-

@@ -1,0 +1,26 @@
+{
+  "name": "tic-tac-toe-nodejs",
+  "version": "1.0.0",
+  "description": "Classic tic tac toe in console with nodeJS",
+  "main": "tictactoe.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YFLooi/tic-tac-toe-node.js.git"
+  },
+  "keywords": [
+    "game"
+  ],
+  "author": "YFLooi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YFLooi/tic-tac-toe-node.js/issues"
+  },
+  "homepage": "https://github.com/YFLooi/tic-tac-toe-node.js#readme",
+  "dependencies": {
+    "@types/keypress": "^2.0.30",
+    "keypress": "^0.2.1"
+  }
+}
